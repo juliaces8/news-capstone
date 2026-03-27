@@ -1,0 +1,11 @@
+<h2>Articles Awaiting Approval</h2>
+<ul>
+    {% for article in articles %}
+    <li>
+        <strong>{{ article.title }}</strong> by {{ article.author.username }}
+        <a href="{% url 'approve_article' article.id %}" style="color: green;">[Approve Now]</a>
+    </li>
+    {% empty %}
+    <li>No articles to approve!</li>
+    {% endfor %}
+</ul>

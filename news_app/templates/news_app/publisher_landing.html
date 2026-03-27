@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global News Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .navbar-brand { font-weight: 800; letter-spacing: 1px; }
+        .card { transition: transform 0.2s; border: none; }
+        .card:hover { transform: translateY(-5px); }
+        .section-title { border-left: 5px solid #0d6efd; padding-left: 15px; margin-bottom: 25px; font-weight: 700; }
+        .feed-card { border-left: 4px solid #198754 !important; }
+        .btn-follow { font-size: 0.75rem; padding: 2px 8px; }
+        .newsletter-content { color: #495057; line-height: 1.6; }
+        .badge-newsletter { background-color: #6f42c1; color: white; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-5 shadow">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'publisher_landing' %}">GLOBAL NEWS</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <span class="nav-link text-info me-3 small">
+                                Logged in as: <strong>{{ user.username }}</strong> ({{ user.get_role_display }})
+                            </span>
+                        </li>
+                        {% if user.role == 'editor' %}
+                            <li class="nav-item"><a class="btn btn-warning btn-sm me-2" href="{% url 'editor_dashboard' %}">Editor Panel</a></li>
+                        {% elif user.role == 'journalist' %}
+                            <li class="nav-item"><a class="btn btn-info btn-sm me-2" href="{% url 'journalist_dashboard' %}">My Dashboard</a></li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                                {% csrf_token %}<button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a class="btn btn-primary btn-sm" href="{% url 'login' %}">Login</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if my_feed %}
+        <div class="mb-5">
+            <h2 class="section-title text-success">For You (Subscribed Content)</h2>
+            <div class="row">
+                {% for item in my_feed %}
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100 feed-card">
+                        <div class="card-body">
+                            <div class="mb-2">
+                                {% if item.publisher in user.pub_subscriptions.all %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-building"></i> Subscribed to {{ item.publisher.name }}
+                                    </span>
+                                {% elif item.author in user.journo_subscriptions.all %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-person-check"></i> Following {{ item.author.username }}
+                                    </span>
+                                {% endif %}
+
+                                {% if item.is_newsletter %}
+                                    <span class="badge badge-newsletter ms-1"><i class="bi bi-envelope"></i> Newsletter</span>
+                                {% endif %}
+                            </div>
+
+                            <h5 class="card-title fw-bold">{{ item.title }}</h5>
+                            <p class="card-text text-secondary">{{ item.content|truncatewords:25 }}</p>
+                            
+                            <div class="mt-3 pt-2 border-top">
+                                <small class="text-muted">
+                                    By <strong>{{ item.author.username }}</strong> 
+                                    {% if item.publisher %}| {{ item.publisher.name }}{% endif %}
+                                    • {{ item.created_at|date:"M d" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <hr class="my-5 opacity-25">
+        </div>
+        {% endif %}
+
+        <h2 class="section-title">Latest Articles</h2>
+        <div class="row mb-5">
+            {% for article in articles %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title text-primary fw-bold">{{ article.title }}</h5>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="card-subtitle text-muted small mb-0">By {{ article.author.username }}</h6>
+                            {% if user.is_authenticated and user.role == 'reader' %}
+                                <a href="{% url 'toggle_follow' 'journalist' article.author.id %}" 
+                                   class="btn btn-follow {% if article.author in user.journo_subscriptions.all %}btn-secondary{% else %}btn-outline-primary{% endif %}">
+                                    {% if article.author in user.journo_subscriptions.all %}Unfollow{% else %}+ Follow{% endif %}
+                                </a>
+                            {% endif %}
+                        </div>
+
+                        <p class="card-text text-secondary">{{ article.content|truncatewords:20 }}</p>
+                        
+                        <div class="mt-auto border-top pt-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if article.publisher %}
+                                    <span class="badge bg-light text-dark border">{{ article.publisher.name }}</span>
+                                    {% if user.is_authenticated and user.role == 'reader' %}
+                                        <a href="{% url 'toggle_follow' 'publisher' article.publisher.id %}" 
+                                           class="btn btn-follow {% if article.publisher in user.pub_subscriptions.all %}btn-dark{% else %}btn-outline-dark{% endif %}">
+                                            {% if article.publisher in user.pub_subscriptions.all %}Unsubscribe{% else %}Subscribe{% endif %}
+                                        </a>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle">Independent</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <div class="col-12"><p class="text-muted text-center py-4">No articles published yet.</p></div>
+            {% endfor %}
+        </div>
+
+        <hr class="my-5 opacity-25">
+
+        <h2 class="section-title">Featured Newsletters</h2>
+        <div class="row pb-5">
+            {% for nl in newsletters %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card border-primary h-100 shadow-sm">
+                    <div class="card-header bg-transparent border-primary d-flex justify-content-between align-items-center">
+                        <span class="badge rounded-pill bg-primary">Newsletter</span>
+                        {% if nl.publisher %}
+                            <small class="text-muted fw-bold">{{ nl.publisher.name }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title text-dark fw-bold">{{ nl.title }}</h5>
+                        <hr class="opacity-10">
+                        <div class="newsletter-content mb-3">
+                            {{ nl.content|linebreaks|truncatewords:35 }}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center pb-3">
+                        <small class="text-muted">By {{ nl.author.username }}</small>
+                        {% if nl.publisher and user.is_authenticated and user.role == 'reader' %}
+                            <a href="{% url 'toggle_follow' 'publisher' nl.publisher.id %}" 
+                               class="btn btn-follow {% if nl.publisher in user.pub_subscriptions.all %}btn-dark{% else %}btn-outline-dark{% endif %}">
+                                {% if nl.publisher in user.pub_subscriptions.all %}Unsubscribe{% else %}Subscribe{% endif %}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <div class="col-12 text-center py-4"><p class="text-muted">No newsletters available at the moment.</p></div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

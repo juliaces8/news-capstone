@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Content</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .form-container { max-width: 800px; margin: 0 auto; }
+        .card { border-radius: 12px; border: none; }
+        /* Style the Django auto-generated form fields */
+        form p label { font-weight: 600; display: block; margin-bottom: 5px; }
+        form p input, form p textarea, form p select { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ced4da; 
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="form-container">
+            <div class="card p-4 shadow">
+                <h3 class="mb-1">Draft Your Story</h3>
+                <p class="text-muted mb-4">Leave 'Publisher' blank to publish as an independent journalist.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {{ form.as_p }}
+
+                    <div class="row mt-4">
+                        <div class="col-md-8">
+                            <button type="submit" class="btn btn-primary w-100">Submit for Review</button>
+                        </div>
+                        <div class="col-md-4">
+                            {% if user.role == 'editor' %}
+                                <a href="{% url 'editor_dashboard' %}" class="btn btn-outline-secondary w-100">Cancel</a>
+                            {% elif user.role == 'journalist' %}
+                                <a href="{% url 'journalist_dashboard' %}" class="btn btn-outline-secondary w-100">Cancel</a>
+                            {% else %}
+                                <a href="{% url 'publisher_landing' %}" class="btn btn-outline-secondary w-100">Cancel</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <p class="text-center mt-3">
+                <small class="text-muted">Note: Content must be approved by an editor before appearing on the public portal.</small>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

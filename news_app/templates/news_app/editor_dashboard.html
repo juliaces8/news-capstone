@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Dashboard | {{ publisher_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root { --glass-bg: rgba(255, 255, 255, 0.9); }
+        body { background-color: #f4f7f6; font-family: 'Inter', sans-serif; }
+        .card { border-radius: 12px; border: none; transition: transform 0.2s; }
+        .stat-card { border-left: 5px solid #0d6efd; }
+        .stat-card-pending { border-left: 5px solid #ffc107; background-color: #fffbef; }
+        .table thead { background-color: #212529; color: white; }
+        .section-title { font-weight: 700; color: #2c3e50; border-bottom: 2px solid #dee2e6; padding-bottom: 0.5rem; }
+        .publisher-badge { background: #e9ecef; color: #495057; font-weight: 600; padding: 0.4rem 1rem; border-radius: 50px; }
+        .btn-action { border-radius: 8px; font-weight: 500; }
+        .admin-tag { font-size: 0.7rem; vertical-align: middle; margin-left: 5px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'publisher_landing' %}">
+                <i class="bi bi-newspaper me-2"></i>GLOBAL NEWS
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="text-light opacity-75 small">
+                    Logged in as: <strong>{{ user.username }}</strong>
+                    {% if user.is_superuser %}
+                        <span class="badge bg-danger admin-tag">ADMIN MODE</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+                <h1 class="h3 mb-1">Editor Control Panel</h1>
+                <span class="publisher-badge"><i class="bi bi-building"></i> {{ publisher_name }}</span>
+            </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                <div class="d-inline-flex gap-2">
+                    <div class="card p-2 px-3 shadow-sm {% if total_pending > 0 %}stat-card-pending{% else %}stat-card{% endif %}">
+                        <small class="text-muted d-block">Awaiting Approval</small>
+                        <span class="h5 mb-0 {% if total_pending > 0 %}text-warning{% else %}text-primary{% endif %} fw-bold">
+                            {{ total_pending }} Action Required
+                        </span>
+                    </div>
+                    <a href="{% url 'publisher_landing' %}" class="btn btn-outline-secondary btn-action d-flex align-items-center">
+                        <i class="bi bi-eye me-2"></i> Live Site
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center mb-3">
+            <h3 class="section-title mb-0 flex-grow-1">Article Queue</h3>
+        </div>
+        
+        <div class="card shadow-sm mb-5">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Headline</th>
+                            <th>Publisher</th>
+                            <th>Author</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Management</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in object_list %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">{{ article.title }}</div>
+                                <small class="text-muted">Created: {{ article.created_at|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                <span class="text-muted small fw-bold">
+                                    {{ article.publisher.name|default:"Independent" }}
+                                </span>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ article.author.username }}</span></td>
+                            <td>
+                                {% if article.is_approved %}
+                                    <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3">Live</span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group shadow-sm">
+                                    {% if not article.is_approved %}
+                                        <a href="{% url 'approve_article' article.id %}" class="btn btn-sm btn-success px-3">Approve</a>
+                                    {% else %}
+                                        <a href="{% url 'unapprove_article' article.id %}" class="btn btn-sm btn-outline-warning">Retract</a>
+                                    {% endif %}
+                                    <a href="{% url 'article_edit' article.id %}" class="btn btn-sm btn-light border" title="Edit Content"><i class="bi bi-pencil"></i></a>
+                                </div>
+                                <form action="{% url 'article_delete' article.id %}" method="POST" class="d-inline ms-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('Permanently delete this article?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <i class="bi bi-inbox text-muted display-4 d-block mb-3"></i>
+                                <p class="text-muted">No articles found in the system.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h3 class="section-title mb-3">Newsletter Editions</h3>
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th class="ps-4">Subject Line</th>
+                            <th>Publisher</th>
+                            <th>Author</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Management</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nl in all_newsletters %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold">{{ nl.title }}</div>
+                                <small class="text-muted">Created: {{ nl.created_at|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                <span class="text-muted small fw-bold">
+                                    {{ nl.publisher.name|default:"Independent" }}
+                                </span>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ nl.author.username }}</span></td>
+                            <td>
+                                {% if nl.is_approved %}
+                                    <span class="text-success small fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Approved</span>
+                                {% else %}
+                                    <span class="text-warning small fw-bold"><i class="bi bi-clock-history me-1"></i>Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group shadow-sm">
+                                    {% if not nl.is_approved %}
+                                        <a href="{% url 'approve_newsletter' nl.id %}" class="btn btn-sm btn-success px-3">Approve</a>
+                                    {% else %}
+                                        <a href="{% url 'unapprove_newsletter' nl.id %}" class="btn btn-sm btn-outline-warning">Retract</a>
+                                    {% endif %}
+                                    <a href="{% url 'newsletter_edit' nl.id %}" class="btn btn-sm btn-light border" title="Edit Content"><i class="bi bi-pencil"></i></a>
+                                </div>
+                                <form action="{% url 'newsletter_delete' nl.id %}" method="POST" class="d-inline ms-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('Permanently delete this newsletter edition?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <i class="bi bi-envelope-open text-muted display-4 d-block mb-3"></i>
+                                <p class="text-muted">No newsletters currently in the system.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

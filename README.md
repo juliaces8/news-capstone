@@ -8,22 +8,22 @@ user subscriptions and role-based permissions.
 
 ---
 
-## Key Features
+## 🚀 Key Features
 
 * **Role-Based Access:** Distinct permissions for Readers, Journalists,
-and Editors using custom role logic.
+  and Editors using custom role logic.
 * **MariaDB Integration:** Professional database backend running on
-Port 3307 for high-performance content delivery.
+  Port 3307 for high-performance content delivery.
 * **Editor Sandboxing:** Editors are strictly limited to approving or
-editing content belonging to their specific assigned Publisher.
+  editing content belonging to their specific assigned Publisher.
 * **Subscription Logic:** Readers follow both individual Journalists
-and entire Publishing houses to build a personalized feed.
+  and entire Publishing houses to build a personalized feed.
 * **Personalized API Feed:** A dedicated REST endpoint filters articles
-based on the user's active subscriptions and approval status.
+  based on the user's active subscriptions and approval status.
 
 ---
 
-## Installation & Local Setup
+## 🛠️ Installation & Local Setup
 
 ### 1. Database Configuration
 Ensure MariaDB is running on **Port 3307**. Create the database:
@@ -33,8 +33,9 @@ CREATE DATABASE news_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 2. Initialize Environment
 
-git clone <XXXXXX>
-cd capstone
+git clone [https://github.com/juliaces8/news-capstone.git]
+(https://github.com/juliaces8/news-capstone.git)
+cd news-capstone
 python -m venv .venv
 # Windows:
 .\.venv\Scripts\activate

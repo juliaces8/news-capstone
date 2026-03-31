@@ -10,6 +10,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.db.models import Q
 
+"""Logic for rendering news pages and handling API requests."""
+
 # Helper function to check if the user is an Editor
 
 

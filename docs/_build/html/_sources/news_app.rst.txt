@@ -1,0 +1,23 @@
+News App Modules
+================
+
+Models
+------
+.. automodule:: news_app.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Views
+-----
+.. automodule:: news_app.views
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+URLs
+----
+.. automodule:: news_app.urls
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -19,6 +19,8 @@ from django.urls import path, include
 from news_app import views
 from . import views
 
+"""URL routing configuration for the news_app."""
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
